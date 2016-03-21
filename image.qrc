@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/icon/action">
+        <file alias="newGame">images/game_controller_1270px_1196147_easyicon.net.png</file>
+        <file alias="help">images/help_320px_1197023_easyicon.net.png</file>
+        <file alias="copyright">images/licenses_copyright_256px_543088_easyicon.net.png</file>
+        <file alias="stop">images/stop_1068px_1190692_easyicon.net.png</file>
+    </qresource>
+    <qresource prefix="/icon">
+        <file alias="icon">images/cnvcs_gomoku_180px_1186758_easyicon.net.png</file>
+    </qresource>
+</RCC>
