@@ -21,6 +21,7 @@ public slots:
     void saveGame();
     void loadGame();
     void setPlayer(PlayerType, PlayerType);
+    void rollback();
 
 private:
     QVector<QPoint> history;
@@ -37,6 +38,8 @@ private:
     Chessman* chessman[BOARD_SIZE][BOARD_SIZE];
     ChessType chessboard[BOARD_SIZE][BOARD_SIZE];
     void setChessboard(const int &x, const int &y, const ChessType &);
+    void highlightTile(const int &x, const int &y);
+    void noHighlight();
 
     void initGame();
     void startThinking();

@@ -6,6 +6,7 @@
         <file alias="stop">images/stop_1068px_1190692_easyicon.net.png</file>
         <file alias="save">images/save_floppy_373px_1187937_easyicon.net.png</file>
         <file alias="read">images/read_mode_902px_1143801_easyicon.net.png</file>
+        <file alias="back">images/back_513px_1176433_easyicon.net.png</file>
     </qresource>
     <qresource prefix="/icon">
         <file alias="icon">images/cnvcs_gomoku_180px_1186758_easyicon.net.png</file>

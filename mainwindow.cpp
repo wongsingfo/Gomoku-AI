@@ -37,6 +37,11 @@ MainWindow::MainWindow(QWidget *parent)
     connect(loadAction, &QAction::triggered, chessboard, &Chessboard::loadGame);
     toolBar->addAction(loadAction);
 
+    QAction* rollbackAction = new QAction(QIcon(":/icon/action/back"), tr("&Back"), this);
+    rollbackAction->setStatusTip("Take back a move.");
+    connect(rollbackAction, &QAction::triggered, chessboard, &Chessboard::rollback);
+    toolBar->addAction(rollbackAction);
+
     adjustSize();
     setWindowTitle(tr("Alpha Gomoku"));
     setWindowIcon(QIcon(":/icon/icon"));

@@ -36,6 +36,21 @@ void Chessboard::setPlayer(PlayerType a, PlayerType b)
     player[1] = b;
 }
 
+void Chessboard::rollback()
+{
+    if (AIThinking) return;
+    if (history.size() < 2) return;
+    for (int i = 0; i < 2; i++)
+    {
+        QPoint t = history.back();
+        history.pop_back();
+        setChessboard(t.rx(), t.ry(), EMPTY);
+    }
+    if (! history.empty())
+        highlightTile(history.back().rx(), history.back().ry());
+    else noHighlight();
+}
+
 void Chessboard::newGame()
 {
     if (AIThinking) return;
@@ -138,6 +153,19 @@ void Chessboard::setChessboard(const int &x, const int &y, const ChessType &t)
     chessman[x][y]->setType(t);
 }
 
+void Chessboard::highlightTile(const int &x, const int &y)
+{
+    highlight->setGeometry(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    highlight->showThis = true;
+    highlight->update();
+}
+
+void Chessboard::noHighlight()
+{
+    highlight->showThis = false;
+    highlight->update();
+}
+
 void Chessboard::initGame()
 {
     QTime t = QTime::currentTime();
@@ -148,9 +176,7 @@ void Chessboard::initGame()
         for (int j = 0; j < BOARD_SIZE; j++)
             setChessboard(i, j, EMPTY);
 
-    highlight->showThis = false;
-    highlight->update();
-
+    noHighlight();
     history.clear();
 }
 
@@ -187,9 +213,7 @@ bool Chessboard::placePiece(const int &x, const int &y)
     else if (currentPlayer == 1) setChessboard(x, y, WHITE);
     else Q_ASSERT(false);
 
-    highlight->setGeometry(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-    highlight->showThis = true;
-    highlight->update();
+    highlightTile(x, y);
 
     history.push_back(QPoint(x, y));
     currentPlayer ^= 1;
