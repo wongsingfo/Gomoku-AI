@@ -18,11 +18,16 @@ signals:
 public slots:
     void newGame();
     void receiverResponse(const int &x, const int &y);
+    void saveGame();
+    void loadGame();
+    void setPlayer(PlayerType, PlayerType);
 
 private:
+    QVector<QPoint> history;
+
     bool validPoint(const int &x, const int &y);
     bool linkCheck(int sx, int sy, int dx, int dy);
-    bool GameOver();
+    bool gameOver();
 
     bool AIThinking;
     bool gameStarted;
@@ -35,6 +40,7 @@ private:
 
     void initGame();
     void startThinking();
+    bool placePiece(const int &x, const int &y); // return true iff game is over
     void processResponse(const int &x, const int &y);
 
 protected:

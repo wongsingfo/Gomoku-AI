@@ -14,6 +14,7 @@ protected:
     ChessType chessboard[BOARD_SIZE][BOARD_SIZE];
 
 public:
+    int randomNumber;
     // always handle with black
     void setChessboard(ChessType *ptr, bool reverse);
     void run() Q_DECL_OVERRIDE;

@@ -3,11 +3,14 @@
 #include "highlight.h"
 #include "ai_thread.h"
 #include "AI/aisample.h"
+#include "AI/aialphabeta.h"
 #include <QPainter>
 #include <QDebug>
 #include <QEvent>
 #include <QMouseEvent>
 #include <QMessageBox>
+#include <QTime>
+#include <QFileDialog>
 #include "constants.h"
 
 Chessboard::Chessboard(QWidget *parent) : QWidget(parent)
@@ -27,12 +30,17 @@ Chessboard::Chessboard(QWidget *parent) : QWidget(parent)
     gameStarted = false;
 }
 
+void Chessboard::setPlayer(PlayerType a, PlayerType b)
+{
+    player[0] = a;
+    player[1] = b;
+}
+
 void Chessboard::newGame()
 {
     if (AIThinking) return;
     initGame();
-    player[0] = AI_sample;
-    player[1] = HUMAN;
+    setPlayer(AI_alphabeta, HUMAN);
     gameStarted = true;
     startThinking();
 }
@@ -40,6 +48,49 @@ void Chessboard::newGame()
 void Chessboard::receiverResponse(const int &x, const int &y)
 {
     processResponse(x, y);
+}
+
+void Chessboard::saveGame()
+{
+    QString path = QFileDialog::getSaveFileName(this, tr("Save"), ".", tr("History(*.txt)"));
+    QFile file(path);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+        return;
+    QTextStream out(&file);
+    QPoint item;
+    foreach (item, history) {
+        out << item.rx() << ' ' << item.ry() << endl;
+    }
+    file.close();
+}
+
+void Chessboard::loadGame()
+{
+    if (AIThinking) return;
+    initGame();
+    setPlayer(AI_alphabeta, HUMAN);
+
+    QString path = QFileDialog::getOpenFileName(this, tr("Load"), ".", tr("History(*.txt)"));
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return;
+    QTextStream in(&file);
+    int x, y;
+    int gameisover = false;
+    while (true)
+    {
+        in >> x >> y;
+        if (in.atEnd()) break;
+        if (placePiece(x, y))
+        {
+            gameisover = true;
+            break;
+        }
+    }
+    file.close();
+
+    gameStarted = true;
+    if (! gameisover) startThinking();
 }
 
 bool Chessboard::validPoint(const int &x, const int &y)
@@ -68,7 +119,7 @@ bool Chessboard::linkCheck(int sx, int sy, int dx, int dy)
     return false;
 }
 
-bool Chessboard::GameOver()
+bool Chessboard::gameOver()
 {
     for (int i = 0; i < BOARD_SIZE; i++) {
         if (linkCheck(i, 0, 0, 1)) return true;
@@ -89,6 +140,8 @@ void Chessboard::setChessboard(const int &x, const int &y, const ChessType &t)
 
 void Chessboard::initGame()
 {
+    QTime t = QTime::currentTime();
+    srand(t.msec() + t.second() * 1000);
     currentPlayer = 0;
     player[0] = player[1] = HUMAN;
     for (int i = 0; i < BOARD_SIZE; i++)
@@ -97,6 +150,8 @@ void Chessboard::initGame()
 
     highlight->showThis = false;
     highlight->update();
+
+    history.clear();
 }
 
 void Chessboard::startThinking()
@@ -106,6 +161,9 @@ void Chessboard::startThinking()
     case AI_sample:
         thread = new AISample(this);
         break;
+    case AI_alphabeta:
+        thread = new AIAlphaBeta(this);
+        break;
     case HUMAN:
     default:
         return;
@@ -113,12 +171,29 @@ void Chessboard::startThinking()
     }
     Q_ASSERT(! AIThinking);
     AIThinking = true;
+    thread->randomNumber = rand();
     thread->setChessboard((ChessType*) chessboard, currentPlayer);
     connect(thread, &AIThread::response,
             this, &Chessboard::receiverResponse);
     connect(thread, &AIThread::finished,
             thread, &QObject::deleteLater);
     thread->start();
+}
+
+bool Chessboard::placePiece(const int &x, const int &y)
+{
+    Q_ASSERT(chessboard[x][y] == EMPTY);
+    if (currentPlayer == 0) setChessboard(x, y, BLACK);
+    else if (currentPlayer == 1) setChessboard(x, y, WHITE);
+    else Q_ASSERT(false);
+
+    highlight->setGeometry(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    highlight->showThis = true;
+    highlight->update();
+
+    history.push_back(QPoint(x, y));
+    currentPlayer ^= 1;
+    return gameOver();
 }
 
 void Chessboard::processResponse(const int &x, const int &y)
@@ -136,21 +211,12 @@ void Chessboard::processResponse(const int &x, const int &y)
         AIThinking = false;
     }
 
-    if (currentPlayer == 0) setChessboard(x, y, BLACK);
-    else if (currentPlayer == 1) setChessboard(x, y, WHITE);
-    else Q_ASSERT(false);
-
-    highlight->setGeometry(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-    highlight->showThis = true;
-    highlight->update();
-
-    if (GameOver())
+    if (placePiece(x, y))
     {
-        QMessageBox::information(this, tr("GameOver!"), "Game is Over!");
+        QMessageBox::information(this, tr("GameOver !"), "Game is Over!");
         return;
     }
 
-    currentPlayer ^= 1;
     startThinking();
 }
 

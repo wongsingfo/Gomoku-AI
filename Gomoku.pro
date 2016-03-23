@@ -18,7 +18,8 @@ SOURCES += main.cpp\
     chessboard.cpp \
     ai_thread.cpp \
     AI/aisample.cpp \
-    highlight.cpp
+    highlight.cpp \
+    AI/aialphabeta.cpp
 
 HEADERS  += mainwindow.h \
     constants.h \
@@ -26,7 +27,8 @@ HEADERS  += mainwindow.h \
     chessboard.h \
     ai_thread.h \
     AI/aisample.h \
-    highlight.h
+    highlight.h \
+    AI/aialphabeta.h
 
 RESOURCES += \
     image.qrc

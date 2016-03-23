@@ -16,6 +16,7 @@ enum PlayerType
 {
     HUMAN,
     AI_sample,
+    AI_alphabeta,
 };
 
 #endif // CONSTANTS

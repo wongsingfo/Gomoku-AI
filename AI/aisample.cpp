@@ -1,18 +1,26 @@
 #include "aisample.h"
 #include <QDebug>
+#include <QVector>
+#include <QPoint>
+#include <QPair>
 
 const int dx[] = {0, 1, 1, 1};
 const int dy[] = {1, 0, 1, -1};
 const int fx[] = {-1, -1, -1, 0, 0, 1, 1, 1, -2, 2, 0, 0};
 const int fy[] = {-1, 0, 1, -1, 1, -1, 0, 1, 0, 0, -2, 2};
 #define trans(p) ((p) == USER ? 0 : 1)
-#define TWO 	0
-#define STWO 	1
-#define THREE 	2
-#define STHREE	3
-#define FOUR	4
-#define SFOUR	5
-#define FIVE	6
+
+enum
+{
+    TWO,
+    STWO,
+    THREE,
+    STHREE,
+    FOUR,
+    SFOUR,
+    FIVE
+};
+
 #define check(x, y) ((x) >= 0 && (y) >= 0 && (x) < n && (y) < n)
 #define checkn(x, y) ((x) < 0 || (y) < 0 || (x) >= n || (y) >= n)
 #define USER 1
@@ -33,9 +41,23 @@ int AISample::dfs(int deep, int p)
     if (cnt[cur^1][FIVE]) return -10000;
     if (cnt[cur][FOUR] || cnt[cur][SFOUR]) return 10000;
 
+    for (int i = 0; i < 2; i++)
+    {
+        int t = 0;
+        if (cnt[i][FOUR]) t++;
+        if (cnt[i][SFOUR]) t++;
+        if (cnt[i][THREE]) t++;
+        if (t >= 2)
+        {
+            if (i == cur) return 10000;
+            else return - 10000;
+        }
+    }
+
     int *ccnt = (p == USER ? cnt[0] : cnt[1]);
     if (deep == 0) return
-            ccnt[TWO] * 2 +
+            ccnt[TWO] * 3 +
+            ccnt[STWO] * 2 +
             ccnt[THREE] * 10 +
             ccnt[STHREE] * 5 +
             ccnt[SFOUR] * 10 +
@@ -114,6 +136,11 @@ void AISample::Count()
                     }
 }
 
+bool cmp(const QPair<int, QPoint> &a, const QPair<int, QPoint> &b)
+{
+    return a.first < b.first;
+}
+
 void AISample::run()
 {
     n = BOARD_SIZE;
@@ -126,23 +153,27 @@ void AISample::run()
             else if (x == BLACK) board[i][j] = COMP;
             else board[i][j] = USER;
         }
-    int rx = BOARD_SIZE / 2, ry = BOARD_SIZE / 2;
 
-    int maxfun = - 1000000, tmp;
+    QVector< QPair<int, QPoint> > sol;
+    sol.push_back(QPair<int, QPoint>(-1000000,
+                                     QPoint(BOARD_SIZE / 2,
+                                            BOARD_SIZE / 2)));
     for (int i = 0; i < n; i ++)
         for (int j = 0; j < n; j ++)
             if (Exist(i, j))
             {
                 board[i][j] = COMP;
-                tmp = - dfs(DEEP, USER);
-                if (tmp > maxfun)
-                {
-                    maxfun = tmp;
-                    rx = i, ry = j;
-                }
+                int tmp = - dfs(DEEP, USER);
+                sol.push_back(QPair<int, QPoint>(tmp, QPoint(i, j)));
                 board[i][j] = 0;
             }
-    response(rx, ry);
+    qSort(sol.begin(), sol.end(), cmp);
+    while (sol.begin()->first + 3 < sol.back().first)
+        sol.pop_front();
+    int index = randomNumber % sol.size();
+    //qDebug() << index << '/' << sol.size();
+    qDebug() << sol[index].first;
+    response(sol[index].second.rx(), sol[index].second.ry());
 }
 
 bool AISample::empty(int x, int y)
@@ -156,13 +187,6 @@ int AISample::PosV(int i, int j)
 }
 
 #undef trans
-#undef TWO
-#undef STWO
-#undef THREE
-#undef STHREE
-#undef FOUR
-#undef UFOUR
-#undef FIVE
 #undef check
 #undef checkn
 #undef USER

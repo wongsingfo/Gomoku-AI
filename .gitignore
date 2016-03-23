@@ -1,6 +1,11 @@
+# Game
+
+record
+
 # QT
 
 Gomoku.pro.user
+image.qrc.autosave
 
 # Compiled Object files
 *.slo
