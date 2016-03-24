@@ -86,7 +86,8 @@ void Chessboard::loadGame()
 {
     if (AIThinking) return;
     initGame();
-    setPlayer(AI_alphabeta, HUMAN);
+    //setPlayer(AI_alphabeta, HUMAN);
+    setPlayer(HUMAN, AI_alphabeta);
 
     QString path = QFileDialog::getOpenFileName(this, tr("Load"), ".", tr("History(*.txt)"));
     QFile file(path);

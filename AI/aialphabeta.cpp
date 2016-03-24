@@ -41,11 +41,11 @@ void AIAlphaBeta::run()
             else board[i][j] = -1;
         }
 
-    for (max_deep = 1; timer < timelimit; max_deep++)
+    for (max_deep = 0; timer < timelimit; max_deep++)
     {
         int tmp = dfs(0, -INF - 233, INF + 233, max_deep);
-        if (tmp <= -INF || tmp >= INF) break;
         qDebug() << "depth:" << max_deep << "expectance:" << tmp;
+        if (tmp <= -INF || tmp >= INF) break;
     }
     qDebug() << timer << "phases have been visited.";
     response(rx, ry);
@@ -104,7 +104,7 @@ int AIAlphaBeta::dfs(int p, int alpha, int beta, int depth)
             que.push_back(Choice(
                               //potential(i, j, p) + potential(i, j, p ^ 1),
                               //qMax(potential(i, j, p), potential(i, j, p ^ 1)),
-                              qMax(potential(i, j, p), potential(i, j, p ^ 1)) +
+                              qMax(potential(i, j, p), potential(i, j, p ^ 1)) * 2 +
                               qMax(potential2(i, j, p), potential2(i, j, p ^ 1)),
                                  i, j));
         }
@@ -113,6 +113,11 @@ int AIAlphaBeta::dfs(int p, int alpha, int beta, int depth)
         que.pop_back();
 
     Choice c;
+
+    /*foreach (c, que) {
+        qDebug() << c.x << ' ' << c.y << ' ' << c.score;
+    }*/
+
     foreach (c, que) {
         board[c.x][c.y] = p;
         int tmp = -dfs(p ^ 1, -beta, -alpha, depth - 1);
@@ -187,7 +192,7 @@ int AIAlphaBeta::potential2(const int &x, const int &y, const int &p)
             cs++;
             if (board[px][py] == p) c++;
         }
-        if (cs >= 5) ret += c * c * c * 5;
+        if (cs >= 5) ret += c * c * c;
     }
     return ret;
 }
