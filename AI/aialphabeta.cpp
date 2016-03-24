@@ -44,6 +44,7 @@ void AIAlphaBeta::run()
     for (max_deep = 1; timer < timelimit; max_deep++)
     {
         int tmp = dfs(0, -INF - 233, INF + 233, max_deep);
+        if (tmp <= -INF || tmp >= INF) break;
         qDebug() << "depth:" << max_deep << "expectance:" << tmp;
     }
     qDebug() << timer << "phases have been visited.";
@@ -82,8 +83,14 @@ int AIAlphaBeta::dfs(int p, int alpha, int beta, int depth)
     tmpPoint = fourAlive(p ^ 1);
     if (tmpPoint.rx() != -1)
     {
+        if (firstLayer)
+        {
+            rx = tmpPoint.rx();
+            ry = tmpPoint.ry();
+            return -INF;
+        }
         board[tmpPoint.rx()][tmpPoint.ry()] = p;
-        int ret = - dfs(p ^ 1, -beta, -alpha, firstLayer ? depth - 1 : depth);
+        int ret = - dfs(p ^ 1, -beta, -alpha, depth);
         board[tmpPoint.rx()][tmpPoint.ry()] = -1;
         return ret;
     }
