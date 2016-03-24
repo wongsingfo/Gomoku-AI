@@ -6,7 +6,7 @@
 
 #define n BOARD_SIZE
 #define INF 1000000
-#define timelimit 22345
+#define timelimit 20000
 #define check(x, y) ((x) >= 0 && (x) < n && (y) >= 0 && (y) < n)
 
 struct Choice
@@ -61,11 +61,33 @@ bool AIAlphaBeta::exist(const int &x, const int &y)
     return false;
 }
 
-int AIAlphaBeta::dfs(int p, int alpha, int beta, int deep)
+int AIAlphaBeta::dfs(int p, int alpha, int beta, int depth)
 {
     if (gameOver()) return -INF;
-    if (deep < 0) return evaluate() * (p ? -1 : 1);
+    if (depth < 0) return evaluate() * (p ? -1 : 1);
     timer++;
+
+    bool firstLayer = depth == max_deep;
+    QPoint tmpPoint;
+    tmpPoint = fourAlive(p);
+    if (tmpPoint.rx() != -1)
+    {
+        if (firstLayer)
+        {
+            rx = tmpPoint.rx();
+            ry = tmpPoint.ry();
+        }
+        return INF;
+    }
+    tmpPoint = fourAlive(p ^ 1);
+    if (tmpPoint.rx() != -1)
+    {
+        board[tmpPoint.rx()][tmpPoint.ry()] = p;
+        int ret = - dfs(p ^ 1, -beta, -alpha, firstLayer ? depth - 1 : depth);
+        board[tmpPoint.rx()][tmpPoint.ry()] = -1;
+        return ret;
+    }
+
     QVector<Choice> que;
     for (int i = 0; i < n; i++)
         for (int j = 0; j < n; j++)
@@ -80,15 +102,13 @@ int AIAlphaBeta::dfs(int p, int alpha, int beta, int deep)
                                  i, j));
         }
     qSort(que);
-    while (que.size() > 10) // || que.end()->score + 50 < que.begin()->score)
+    while (que.size() > 10)
         que.pop_back();
-
-    bool firstLayer = deep == max_deep;
 
     Choice c;
     foreach (c, que) {
         board[c.x][c.y] = p;
-        int tmp = -dfs(p ^ 1, -beta, -alpha, deep - 1);
+        int tmp = -dfs(p ^ 1, -beta, -alpha, depth - 1);
         board[c.x][c.y] = -1;
         if (tmp >= beta)
             return beta;
@@ -140,19 +160,20 @@ const int d4[][2] = {
 int AIAlphaBeta::potential2(const int &x, const int &y, const int &p)
 {
     int ret = 0;
+    int dx, dy;
     for (int d = 0; d < 4; d++)
     {
         int c = 0, cs = 1;
-        for (int s = 1, px = x, py = y, dx = d4[d][0], dy = d4[d][1];
-             s < 5; s++, px += dx, py += dy)
+        dx = d4[d][0], dy = d4[d][1];
+        for (int s = 1, px = x + dx, py = y + dy; s < 5; s++, px += dx, py += dy)
         {
             if (! check(px, py)) break;
             if (board[px][py] == (p ^ 1)) break;
             cs++;
             if (board[px][py] == p) c++;
         }
-        for (int s = 1, px = x, py = y, dx = -d4[d][0], dy = -d4[d][1];
-             s < 5; s++, px += dx, py += dy)
+        dx = -dx, dy = -dy;
+        for (int s = 1, px = x + dx, py = y + dy; s < 5; s++, px += dx, py += dy)
         {
             if (! check(px, py)) break;
             if (board[px][py] == (p ^ 1)) break;
@@ -162,6 +183,43 @@ int AIAlphaBeta::potential2(const int &x, const int &y, const int &p)
         if (cs >= 5) ret += c * c * c * 5;
     }
     return ret;
+}
+
+QPoint AIAlphaBeta::fourAlive(const int &p)
+{
+    for (int d = 0; d < 4; d++)
+    {
+        int dx = d4[d][0];
+        int dy = d4[d][1];
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+            {
+                if (board[i][j] != p) continue;
+
+                int x = i, y = j;
+                int c = 0;
+                do
+                {
+                    x += dx;
+                    y += dy;
+                    c++;
+                }while (check(x, y) && board[x][y] == p);
+                if (c >= 4)
+                {
+                    if (check(x, y) && board[x][y] == -1)
+                    {
+                        return QPoint(x, y);
+                    }
+                    x = i - dx;
+                    y = j - dy;
+                    if (check(x, y) && board[x][y] == -1)
+                    {
+                        return QPoint(x, y);
+                    }
+                }
+            }
+    }
+    return QPoint(-1, -1);
 }
 
 int AIAlphaBeta::evaluate()

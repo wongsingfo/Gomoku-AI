@@ -15,9 +15,10 @@ private:
     int timer;
     int max_deep;
     bool exist(const int &x, const int &y);
-    int dfs(int p, int alpha, int beta, int deep);
+    int dfs(int p, int alpha, int beta, int depth);
     int potential(const int &x, const int &y, const int &p);
     int potential2(const int &x, const int &y, const int &p);
+    QPoint fourAlive(const int &p);
     int evaluate();
 
     bool gameOver();
