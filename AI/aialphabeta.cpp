@@ -6,7 +6,7 @@
 
 #define n BOARD_SIZE
 #define INF 1000000
-#define timelimit 20000
+#define timelimit 1000
 #define check(x, y) ((x) >= 0 && (x) < n && (y) >= 0 && (y) < n)
 
 struct Choice
@@ -206,29 +206,13 @@ QPoint AIAlphaBeta::fourAlive(const int &p)
         for (int i = 0; i < n; i++)
             for (int j = 0; j < n; j++)
             {
-                if (board[i][j] != p) continue;
+                if (board[i][j] != -1) continue;
 
-                int x = i, y = j;
                 int c = 0;
-                do
-                {
-                    x += dx;
-                    y += dy;
-                    c++;
-                }while (check(x, y) && board[x][y] == p);
-                if (c >= 4)
-                {
-                    if (check(x, y) && board[x][y] == -1)
-                    {
-                        return QPoint(x, y);
-                    }
-                    x = i - dx;
-                    y = j - dy;
-                    if (check(x, y) && board[x][y] == -1)
-                    {
-                        return QPoint(x, y);
-                    }
-                }
+                for (int x = i + dx, y = j + dy; check(x, y) && board[x][y] == p; x += dx, y += dy) c++;
+                for (int x = i - dx, y = j - dy; check(x, y) && board[x][y] == p; x -= dx, y -= dy) c++;
+
+                if (c >= 4) return QPoint(i, j);
             }
     }
     return QPoint(-1, -1);
