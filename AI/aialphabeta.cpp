@@ -6,7 +6,7 @@
 
 #define n BOARD_SIZE
 #define INF 1000000
-#define timelimit 1000
+#define timelimit 12345
 #define check(x, y) ((x) >= 0 && (x) < n && (y) >= 0 && (y) < n)
 
 struct Choice
@@ -104,8 +104,8 @@ int AIAlphaBeta::dfs(int p, int alpha, int beta, int depth)
             que.push_back(Choice(
                               //potential(i, j, p) + potential(i, j, p ^ 1),
                               //qMax(potential(i, j, p), potential(i, j, p ^ 1)),
-                              qMax(potential(i, j, p), potential(i, j, p ^ 1)) * 2 +
-                              qMax(potential2(i, j, p), potential2(i, j, p ^ 1)),
+                              qMax(potential(i, j, p), potential(i, j, p ^ 1)) +
+                              qMax(potential2(i, j, p), potential2(i, j, p ^ 1)) * 2,
                                  i, j));
         }
     qSort(que);
@@ -141,7 +141,6 @@ int AIAlphaBeta::potential(const int &x, const int &y, const int &p)
         {
             if (! dx && ! dy) continue;
             int tmp = 0;
-            int c = 0;
             for (int s = 1, px = x, py = y; s < 5; s++, px += dx, py += dy)
             {
                 if (! check(px, py)) break;
@@ -153,7 +152,6 @@ int AIAlphaBeta::potential(const int &x, const int &y, const int &p)
                 if (board[px][py] == -1) tmp += 1;
                 else  // board[px][py] == p
                 {
-                    c++;
                     tmp += (6 - s) * (6 - s);
                 }
             }
