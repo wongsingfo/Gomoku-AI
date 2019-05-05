@@ -31,8 +31,9 @@ AIAlphaBeta::AIAlphaBeta(QObject *parent) : AIThread(parent)
 
 void AIAlphaBeta::run()
 {
+    qDebug() << "running\n";
     timer = 0;
-    rx = n / 2, ry = n / 2;
+    rx = n / 2; ry = n / 2;
     for (int i = 0; i < n; i++)
         for (int j = 0; j < n; j++)
         {
@@ -57,7 +58,7 @@ bool AIAlphaBeta::exist(const int &x, const int &y)
         for (int dy = -2; dy <= 2; dy++)
         {
             int p = x + dx, q = y + dy;
-            if (check(p, q) && chessboard[p][q] != -1) return true;
+            if (check(p, q) && chessboard[p][q] != EMPTY) return true;
         }
     return false;
 }
@@ -127,7 +128,7 @@ int AIAlphaBeta::dfs(int p, int alpha, int beta, int depth)
         if (tmp > alpha)
         {
             alpha = tmp;
-            if (firstLayer) rx = c.x, ry = c.y;
+            if (firstLayer) {rx = c.x; ry = c.y;}
         }
     }
     return alpha;
@@ -174,7 +175,7 @@ int AIAlphaBeta::potential2(const int &x, const int &y, const int &p)
     for (int d = 0; d < 4; d++)
     {
         int c = 0, cs = 1;
-        dx = d4[d][0], dy = d4[d][1];
+        dx = d4[d][0]; dy = d4[d][1];
         for (int s = 1, px = x + dx, py = y + dy; s < 5; s++, px += dx, py += dy)
         {
             if (! check(px, py)) break;
@@ -182,7 +183,7 @@ int AIAlphaBeta::potential2(const int &x, const int &y, const int &p)
             cs++;
             if (board[px][py] == p) c++;
         }
-        dx = -dx, dy = -dy;
+        dx = -dx; dy = -dy;
         for (int s = 1, px = x + dx, py = y + dy; s < 5; s++, px += dx, py += dy)
         {
             if (! check(px, py)) break;

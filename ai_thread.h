@@ -8,7 +8,7 @@ class AIThread : public QThread
 {
     Q_OBJECT
 public:
-    explicit AIThread(QObject* parent = 0);
+    explicit AIThread(QObject* parent = nullptr);
 
 protected:
     ChessType chessboard[BOARD_SIZE][BOARD_SIZE];

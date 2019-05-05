@@ -11,7 +11,7 @@ class Chessboard : public QWidget
 {
     Q_OBJECT
 public:
-    explicit Chessboard(QWidget *parent = 0);
+    explicit Chessboard(QWidget *parent = nullptr);
 
 signals:
 

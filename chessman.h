@@ -8,7 +8,7 @@ class Chessman : public QWidget
 {
     Q_OBJECT
 public:
-    explicit Chessman(QWidget *parent = 0);
+    explicit Chessman(QWidget *parent = nullptr);
     void setType(ChessType);
 
 protected:
