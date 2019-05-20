@@ -13,6 +13,7 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
+    AI/aigo.cpp \
         mainwindow.cpp \
     chessman.cpp \
     chessboard.cpp \
@@ -22,6 +23,7 @@ SOURCES += main.cpp\
     AI/aialphabeta.cpp
 
 HEADERS  += mainwindow.h \
+    AI/aigo.h \
     constants.h \
     chessman.h \
     chessboard.h \

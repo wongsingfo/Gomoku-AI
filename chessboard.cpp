@@ -4,6 +4,7 @@
 #include "ai_thread.h"
 #include "AI/aisample.h"
 #include "AI/aialphabeta.h"
+#include "AI/aigo.h"
 #include <QPainter>
 #include <QDebug>
 #include <QEvent>
@@ -55,9 +56,10 @@ void Chessboard::newGame()
 {
     if (AIThinking) return;
     initGame();
+    setPlayer(AI_alphabeta, AI_go);
     //setPlayer(HUMAN, AI_alphabeta);
     //setPlayer(AI_alphabeta, HUMAN);
-    setPlayer(AI_sample, HUMAN);
+//    setPlayer(AI_sample, HUMAN);
     //setPlayer(AI_sample, AI_alphabeta);
     //setPlayer(AI_alphabeta, AI_alphabeta);
     gameStarted = true;
@@ -194,6 +196,9 @@ void Chessboard::startThinking()
         break;
     case AI_alphabeta:
         thread = new AIAlphaBeta(this);
+        break;
+    case AI_go:
+        thread = new AIGO(this);
         break;
     case HUMAN:
     default:

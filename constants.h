@@ -17,6 +17,7 @@ enum PlayerType
     HUMAN,
     AI_sample,
     AI_alphabeta,
+    AI_go,
 };
 
 #endif // CONSTANTS
