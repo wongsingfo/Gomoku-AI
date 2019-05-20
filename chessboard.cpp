@@ -13,7 +13,7 @@
 #include <QFileDialog>
 #include "constants.h"
 
-Chessboard::Chessboard(QWidget *parent) : QWidget(parent)
+Chessboard::Chessboard(QWidget *parent) : QWidget(parent), AIThinking(false)
 {
     highlight = new Highlight(this);
     setFixedSize(TILE_SIZE * BOARD_SIZE, TILE_SIZE * BOARD_SIZE);
