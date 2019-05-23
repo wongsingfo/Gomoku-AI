@@ -2,140 +2,57 @@
 #include <QVector>
 #include <QPoint>
 #include <QDebug>
+#include <stack>
 #include "constants.h"
 
-#define n BOARD_SIZE
-#define INF 1000000
-#define timelimit 12345
-#define check(x, y) ((x) >= 0 && (x) < n && (y) >= 0 && (y) < n)
-
-struct Choice
-{
-    Choice (int _score = 0, int _x = 0, int _y = 0)
-        : score(_score), x(_x), y(_y)
-    {
-    }
-
-    int score;
-    int x, y;
-    bool operator < (const Choice &o) const
-    {
-        return score > o.score;
-    }
-};
 
 AIGO::AIGO(QObject *parent) : AIThread(parent)
 {
 
 }
 
-void AIGO::run()
-{
-    qDebug() << "running\n";
-    timer = 0;
-    rx = n / 2; ry = n / 2;
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++)
-        {
-            if (chessboard[i][j] == BLACK) board[i][j] = 0;
-            else if (chessboard[i][j] == WHITE) board[i][j] = 1;
-            else board[i][j] = -1;
-        }
 
-    for (max_deep = 0; timer < timelimit; max_deep++)
-    {
-        int tmp = dfs(0, -INF - 233, INF + 233, max_deep);
-        qDebug() << "depth:" << max_deep << "expectance:" << tmp;
-        if (tmp <= -INF || tmp >= INF) break;
-    }
-    qDebug() << timer << "phases have been visited.";
-    response(rx, ry);
+static constexpr int EMPTYMARKER = -1;
+static constexpr int INF = 10000;
+
+static char board[BOARD_SIZE][BOARD_SIZE];
+
+static inline bool check(int x, int y) {
+    if (x < 0 || x >= BOARD_SIZE) return false;
+    if (y < 0 || y >= BOARD_SIZE) return false;
+    return true;
 }
 
-bool AIGO::exist(const int &x, const int &y)
+static inline bool isEmpty(int x, int y) {
+    return board[x][y] == EMPTYMARKER;
+}
+
+static bool nearByChess(int x, int y)
 {
     for (int dx = -2; dx <= 2; dx++)
         for (int dy = -2; dy <= 2; dy++)
         {
             int p = x + dx, q = y + dy;
-            if (check(p, q) && chessboard[p][q] != EMPTY) return true;
+            if (check(p, q) && board[p][q] != EMPTYMARKER) return true;
         }
     return false;
 }
 
-int AIGO::dfs(int p, int alpha, int beta, int depth)
-{
-    if (gameOver()) return -INF;
-    if (depth < 0) return evaluate() * (p ? -1 : 1);
-    timer++;
 
-    bool firstLayer = depth == max_deep;
-    QPoint tmpPoint;
-    tmpPoint = fourAlive(p);
-    if (tmpPoint.rx() != -1)
-    {
-        if (firstLayer)
-        {
-            rx = tmpPoint.rx();
-            ry = tmpPoint.ry();
-        }
-        return INF;
+struct Threat {
+    int x, y;
+    int level;
+
+    Threat(int x, int y, int level) : x(x), y(y), level(level) {}
+
+    bool operator < (const Threat &o) const {
+        return level < o.level;
     }
-    tmpPoint = fourAlive(p ^ 1);
-    if (tmpPoint.rx() != -1)
-    {
-        if (firstLayer)
-        {
-            rx = tmpPoint.rx();
-            ry = tmpPoint.ry();
-            return -INF;
-        }
-        board[tmpPoint.rx()][tmpPoint.ry()] = p;
-        int ret = - dfs(p ^ 1, -beta, -alpha, depth);
-        board[tmpPoint.rx()][tmpPoint.ry()] = -1;
-        return ret;
-    }
+};
 
-    QVector<Choice> que;
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++)
-        {
-            if (board[i][j] != -1) continue;
-            if (! exist(i, j)) continue;
-            que.push_back(Choice(
-                              //potential(i, j, p) + potential(i, j, p ^ 1),
-                              //qMax(potential(i, j, p), potential(i, j, p ^ 1)),
-                              qMax(potential(i, j, p), potential(i, j, p ^ 1)) +
-                              qMax(potential2(i, j, p), potential2(i, j, p ^ 1)) * 2,
-                                 i, j));
-        }
-    qSort(que);
-    while (que.size() > 10)
-        que.pop_back();
+typedef Threat Choice;
 
-    Choice c;
-
-    /*foreach (c, que) {
-        qDebug() << c.x << ' ' << c.y << ' ' << c.score;
-    }*/
-
-    foreach (c, que) {
-        board[c.x][c.y] = p;
-        int tmp = -dfs(p ^ 1, -beta, -alpha, depth - 1);
-        board[c.x][c.y] = -1;
-        if (tmp >= beta)
-            return beta;
-        if (tmp > alpha)
-        {
-            alpha = tmp;
-            if (firstLayer) {rx = c.x; ry = c.y;}
-        }
-    }
-    return alpha;
-}
-
-int AIGO::potential(const int &x, const int &y, const int &p)
-{
+static int potential(const int &x, const int &y, const int &p) {
     int ret = 0;
     for (int dx = -1; dx <= 1; dx++)
         for (int dy = -1; dy <= 1; dy++)
@@ -161,15 +78,14 @@ int AIGO::potential(const int &x, const int &y, const int &p)
     return ret;
 }
 
-const int d4[][2] = {
+static const int d4[][2] = {
     {1, -1},
     {1, 0},
     {1, 1},
     {0, 1},
 };
 
-int AIGO::potential2(const int &x, const int &y, const int &p)
-{
+static int potential2(const int &x, const int &y, const int &p) {
     int ret = 0;
     int dx, dy;
     for (int d = 0; d < 4; d++)
@@ -196,79 +112,250 @@ int AIGO::potential2(const int &x, const int &y, const int &p)
     return ret;
 }
 
-QPoint AIGO::fourAlive(const int &p)
-{
-    for (int d = 0; d < 4; d++)
-    {
-        int dx = d4[d][0];
-        int dy = d4[d][1];
-        for (int i = 0; i < n; i++)
-            for (int j = 0; j < n; j++)
-            {
-                if (board[i][j] != -1) continue;
-
-                int c = 0;
-                for (int x = i + dx, y = j + dy; check(x, y) && board[x][y] == p; x += dx, y += dy) c++;
-                for (int x = i - dx, y = j - dy; check(x, y) && board[x][y] == p; x -= dx, y -= dy) c++;
-
-                if (c >= 4) return QPoint(i, j);
-            }
-    }
-    return QPoint(-1, -1);
-}
-
-int AIGO::evaluate()
-{
+static int evaluateGame(int p) {
     int ret = 0;
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++)
+    for (int i = 0; i < BOARD_SIZE; i++)
+        for (int j = 0; j < BOARD_SIZE; j++)
         {
             int t = board[i][j];
-            if (t == -1) continue;
-            ret += potential(i, j, t) * (board[i][j] == 0 ? 1 : -1);
+            if (t == EMPTYMARKER) continue;
+            if (t == p) {
+                ret += potential(i, j, t);
+            } else {
+                ret -= potential(i, j, t);
+            }
         }
     return ret;
 }
 
-bool AIGO::gameOver()
-{
-    for (int i = 0; i < n; i++)
-    {
-        if (linkCheck(i, 0, 0, 1)) return true;
-        if (linkCheck(0, i, 1, 0)) return true;
-        if (linkCheck(i, 0, 1, 1)) return true;
-        if (linkCheck(i, 0, -1, 1)) return true;
-        if (linkCheck(0, i, 1, 1)) return true;
-        if (linkCheck(n - 1, i, -1, 1)) return true;
-    }
-    return false;
+
+static std::stack<Threat> history;
+
+static void playStep(Threat t, int p) {
+    Q_ASSERT(board[t.x][t.y] == EMPTYMARKER);
+    board[t.x][t.y] = static_cast<char> (p);
+    history.push(t);
 }
 
-bool AIGO::linkCheck(int x, int y, int dx, int dy)
+static void playStepBack() {
+    Threat t = history.top();
+    history.pop();
+    board[t.x][t.y] = EMPTYMARKER;
+}
+
+static void threatSearch (int p, std::vector<Threat> &r,
+                          int sx, int sy, int dx, int dy) {
+    int trail = 0xaaa;
+    int x = sx, y = sy;
+
+    /* Encoding:
+     *   _ => 00
+     *   o => 01
+     *   x => 10
+     *
+     * xxxxxx => 0xaaa
+     *
+     * 5 bits mask => 0x3ff
+     * 6 bits mask => 0xfff
+     *
+     * Level 5:
+     * ooooo  => 01 01 01 01 01 => 0x155
+     *
+     * Level 4:
+     * oooo_  => 01 01 01 01 00 => 0x154, 0x55
+     * ooo_o  => 01 01 01 00 01 => 0x151, 0x115
+     * oo_oo  =>                   0x145
+     *
+     * Level 3:
+     * _ooo_  => 00 01 01 01 00 => 0x54
+     * _oo_o_ => 00 01 01 00 01 00 => 0x144, 0x114
+     */
+
+
+
+    while (check(x, y)) {
+        trail <<= 2;
+        if (board[x][y] == p) {
+            trail |= 1;
+        } else if (board[x][y] == EMPTYMARKER) {
+            trail |= 0;
+        } else {  //board[x][y] == p ^ 1
+            trail |= 2;
+        }
+
+
+        switch (trail&0x3ff) {
+        case 0x155: r.push_back(Threat(0, 0, 5)); return;
+        case 0x154: r.push_back(Threat(x, y, 4)); break;
+        case 0x55:  r.push_back(Threat(x-dx*4, y-dy*4, 4)); break;
+        case 0x151: r.push_back(Threat(x-dx, y-dy, 4)); break;
+        case 0x115: r.push_back(Threat(x-dx*3, y-dy*3, 4)); break;
+        case 0x145: r.push_back(Threat(x-dx*2, y-dy*2, 4)); break;
+        case 0x54:
+            r.push_back(Threat(x, y, 3));
+            r.push_back(Threat(x-dx*4, y-dy*4, 3));
+            break;
+        }
+
+        if ((trail&0xfff) == 0x144) {
+            r.push_back(Threat(x, y, 3));
+            r.push_back(Threat(x-dx*2, y-dy*2, 3));
+            r.push_back(Threat(x-dx*5, y-dy*5, 3));
+        } else if ((trail&0xfff) == 0x114) {
+            r.push_back(Threat(x, y, 3));
+            r.push_back(Threat(x-dx*3, y-dy*3, 3));
+            r.push_back(Threat(x-dx*5, y-dy*5, 3));
+        }
+
+        x += dx;
+        y += dy;
+    }
+}
+
+static std::vector<Threat> threatSearch(int p) {
+
+    std::vector<Threat> r;
+//    return r;
+
+    for (int i = 0; i < BOARD_SIZE; i++) {
+        threatSearch(p, r, i, 0, 0, 1);
+        threatSearch(p, r, i, 0, 1, 1);
+    }
+    for (int j = 0; j < BOARD_SIZE; j++) {
+        threatSearch(p, r, 0, j, 1, 0);
+        threatSearch(p, r, 0, j, 1, 1);
+    }
+
+    return r;
+}
+
+static int search(
+        int p,
+        int alpha, int beta,
+        int remaining);
+
+static void search(int p, int* alpha_addr, int beta, int remaining,
+                   std::vector<Threat> &trial, int delta) {
+    int alpha = *alpha_addr;
+    for (Threat t : trial) {
+        playStep(t, p);
+        int score = - search(p^1, -beta, -alpha, remaining - delta);
+        playStepBack();
+
+        if (score >= beta) {
+            *alpha_addr = beta;
+            return;
+        }
+        alpha = std::max(alpha, score);
+
+
+    }
+    *alpha_addr = alpha;
+}
+
+static int search(
+        int p, // we take which side
+        int alpha, int beta,
+        int remaining) // remaining steps we want to try
 {
-    int c = -1, s = 0;
-    for (; check(x, y); x += dx, y += dy)
-    {
-        int t = board[x][y];
-        if (t == c)
-        {
-            s++;
-            if (s >= 5 && t != -1)
+    if (remaining < 0) {
+//        for (int i = 0; i < BOARD_SIZE; i++) {
+//            for (int j = 0; j < BOARD_SIZE; j++) {
+//                int t = board[i][j];
+//                printf("%c", t == p ? 'o' : (t == (p^1) ? 'x' : '_'));
+//            }
+//            printf("\n");
+//        }
+//        exit(0);
+        int r = evaluateGame(p);
+//        qDebug() << r;
+        return r;
+    }
+
+    auto myThreats = threatSearch(p);
+    auto rivalThreats = threatSearch(p^1);
+
+    std::sort(myThreats.begin(), myThreats.end());
+    std::sort(rivalThreats.begin(), rivalThreats.end());
+
+    int myLevel = myThreats.empty() ? 0 : myThreats.back().level;
+    int rivalLevel = rivalThreats.empty() ? 0 : rivalThreats.back().level;
+//    qDebug() << myLevel << rivalLevel;
+
+    if (myLevel == 5) {
+        return INF;
+    }
+    if (rivalLevel == 5) {
+        qDebug() << "INF" ;
+        return -INF;
+    }
+
+    if (myLevel >= rivalLevel) {
+        search(p, &alpha, beta, remaining, myThreats, 1);
+        if (alpha == beta) return alpha;
+
+        std::vector<Choice> que;
+        for (int i = 0; i < BOARD_SIZE; i++)
+            for (int j = 0; j < BOARD_SIZE; j++)
             {
-                return true;
+                if (! isEmpty(i, j)) continue;
+                if (! nearByChess(i, j)) continue;
+                int t = std::max(potential(i, j, p), potential(i, j, p ^ 1));
+                t += std::max(potential2(i, j, p), potential2(i, j, p ^ 1)) * 2;
+                que.push_back(Choice(i, j, t));
+            }
+        std::sort(que.rbegin(), que.rend());
+        que.resize(std::min(que.size(), static_cast<size_t>(10)), Threat(0,0,0));
+
+        search(p, &alpha, beta, remaining, que, 3);
+    } else {
+        search(p, &alpha, beta, remaining, rivalThreats, 1);
+    }
+    return alpha;
+}
+
+static int evaluate() {
+    return search(1, -INF, INF, 13);
+}
+
+void AIGO::run()
+{
+    qDebug() << "AIGO begin";
+    bool is_empty = true;
+    for (int i = 0; i < BOARD_SIZE; i++)
+        for (int j = 0; j < BOARD_SIZE; j++)
+        {
+            if (chessboard[i][j] == BLACK) {
+                is_empty = false;
+                board[i][j] = 0;
+            }
+            else if (chessboard[i][j] == WHITE) {
+                is_empty = false;
+                board[i][j] = 1;
+            }
+            else board[i][j] = EMPTYMARKER;
+        }
+    // we take black
+
+    if (is_empty) response(BOARD_SIZE / 2, BOARD_SIZE / 2);
+
+    int best_i, best_j, worst_score = INF + 1;
+    for (int i = 0; i < BOARD_SIZE; i++)
+        for (int j = 0; j < BOARD_SIZE; j++) {
+            if (nearByChess(i, j) && isEmpty(i, j)) {
+                board[i][j] = 0;
+                int score = evaluate();
+                if (score < worst_score) {
+                    worst_score = score;
+                    best_i = i;
+                    best_j = j;
+                }
+
+//                qDebug() << i << j << worst_score;
+                board[i][j] = EMPTYMARKER;
             }
         }
-        else
-        {
-            c = t;
-            s = 1;
-        }
-    }
-    return false;
+    qDebug() << "best score: " << -worst_score;
+    response(best_i, best_j);
+    qDebug() << "AIGO end";
 }
-
-
-#undef n
-#undef INF
-#undef timelimit
-#undef check

@@ -57,6 +57,7 @@ void Chessboard::newGame()
     if (AIThinking) return;
     initGame();
     setPlayer(AI_alphabeta, AI_go);
+//    setPlayer(AI_go, AI_alphabeta);
     //setPlayer(HUMAN, AI_alphabeta);
     //setPlayer(AI_alphabeta, HUMAN);
 //    setPlayer(AI_sample, HUMAN);
