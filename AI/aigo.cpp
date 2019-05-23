@@ -195,16 +195,16 @@ static void threatSearch (int p, std::vector<Threat> &r,
             r.push_back(Threat(x, y, 3));
             r.push_back(Threat(x-dx*4, y-dy*4, 3));
             break;
-        }
-
-        if ((trail&0xfff) == 0x144) {
-            r.push_back(Threat(x, y, 3));
-            r.push_back(Threat(x-dx*2, y-dy*2, 3));
-            r.push_back(Threat(x-dx*5, y-dy*5, 3));
-        } else if ((trail&0xfff) == 0x114) {
-            r.push_back(Threat(x, y, 3));
-            r.push_back(Threat(x-dx*3, y-dy*3, 3));
-            r.push_back(Threat(x-dx*5, y-dy*5, 3));
+        default:
+            if ((trail&0xfff) == 0x144) {
+                r.push_back(Threat(x, y, 3));
+                r.push_back(Threat(x-dx*2, y-dy*2, 3));
+                r.push_back(Threat(x-dx*5, y-dy*5, 3));
+            } else if ((trail&0xfff) == 0x114) {
+                r.push_back(Threat(x, y, 3));
+                r.push_back(Threat(x-dx*3, y-dy*3, 3));
+                r.push_back(Threat(x-dx*5, y-dy*5, 3));
+            }
         }
 
         x += dx;
@@ -220,10 +220,14 @@ static std::vector<Threat> threatSearch(int p) {
     for (int i = 0; i < BOARD_SIZE; i++) {
         threatSearch(p, r, i, 0, 0, 1);
         threatSearch(p, r, i, 0, 1, 1);
+        threatSearch(p, r, i, 0, -1, 1);
     }
     for (int j = 0; j < BOARD_SIZE; j++) {
         threatSearch(p, r, 0, j, 1, 0);
+    }
+    for (int j = 1; j < BOARD_SIZE; j++) {
         threatSearch(p, r, 0, j, 1, 1);
+        threatSearch(p, r, BOARD_SIZE-1, j, -1, 1);
     }
 
     return r;
