@@ -11,7 +11,7 @@ AIGO::AIGO(QObject *parent) : AIThread(parent)
 
 }
 
-
+static constexpr bool debug = true;
 static constexpr int EMPTYMARKER = -1;
 static constexpr int INF = 10000;
 
@@ -125,6 +125,8 @@ static int evaluateGame(int p) {
                 ret -= potential(i, j, t);
             }
         }
+
+    ret += (rand() % 16 - 8);
     return ret;
 }
 
@@ -142,6 +144,8 @@ static void playStepBack() {
     history.pop();
     board[t.x][t.y] = EMPTYMARKER;
 }
+
+static int phase_count;
 
 static void threatSearch (int p, std::vector<Threat> &r,
                           int sx, int sy, int dx, int dy) {
@@ -240,6 +244,7 @@ static int search(
 
 static void search(int p, int* alpha_addr, int beta, int remaining,
                    std::vector<Threat> &trial, int delta) {
+    if (debug) phase_count += 1;
     int alpha = *alpha_addr;
     for (Threat t : trial) {
         playStep(t, p);
@@ -290,7 +295,6 @@ static int search(
         return INF;
     }
     if (rivalLevel == 5) {
-        qDebug() << "INF" ;
         return -INF;
     }
 
@@ -325,6 +329,7 @@ static int evaluate() {
 void AIGO::run()
 {
     qDebug() << "AIGO begin";
+    phase_count = 0;
     bool is_empty = true;
     for (int i = 0; i < BOARD_SIZE; i++)
         for (int j = 0; j < BOARD_SIZE; j++)
@@ -360,6 +365,7 @@ void AIGO::run()
             }
         }
     qDebug() << "best score: " << -worst_score;
+    qDebug() << phase_count << "phases have been visited";
     response(best_i, best_j);
-    qDebug() << "AIGO end";
+    qDebug() << "AIGO end" << endl;
 }

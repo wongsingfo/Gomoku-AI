@@ -42,12 +42,13 @@ void AIAlphaBeta::run()
             else board[i][j] = -1;
         }
 
+    int tmp;
     for (max_deep = 0; timer < timelimit; max_deep++)
     {
-        int tmp = dfs(0, -INF - 233, INF + 233, max_deep);
-        qDebug() << "depth:" << max_deep << "expectance:" << tmp;
+        tmp = dfs(0, -INF - 233, INF + 233, max_deep);
         if (tmp <= -INF || tmp >= INF) break;
     }
+    qDebug() << "depth:" << max_deep << "expectance:" << tmp;
     qDebug() << timer << "phases have been visited.";
     response(rx, ry);
 }
